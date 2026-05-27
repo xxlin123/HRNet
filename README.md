@@ -175,27 +175,17 @@ python tools/test_hrnet_onnx_image.py \
 
 ---
 
-## 10. 预训练模型说明
-
-如果使用 ImageNet 预训练的 HRNet 权重，请将其放置到对应目录，例如：
-
-```text
-hrnetv2_pretrained/
-└── hrnetv2_w18_imagenet_pretrained.pth
+## 10. 致谢
+本项目参考 HARNet 相关开源实现，感谢原作者在人脸关键点定位方面的开源工作。
+```bibtex
+@article{wang2020deep,
+  title={Deep high-resolution representation learning for visual recognition},
+  author={Wang, Jingdong and Sun, Ke and Cheng, Tianheng and Jiang, Borui and Deng, Chaorui and Zhao, Yang and Liu, Dong and Mu, Yadong and Tan, Mingkui and Wang, Xinggang and others},
+  journal={IEEE transactions on pattern analysis and machine intelligence},
+  volume={43},
+  number={10},
+  pages={3349--3364},
+  year={2020},
+  publisher={IEEE}
+}
 ```
-
-由于预训练权重文件通常较大，建议不要直接上传到 GitHub 仓库中。可以通过网盘、GitHub Release 或 Git LFS 等方式管理模型权重。
-
----
-
-## 11. 当前版本说明
-
-当前版本主要完成以下内容：
-
-- 整理 WFLW 数据集训练配置；
-- 完成 HRNet-W18 在 WFLW 数据集上的训练与测试流程；
-- 新增 ONNX 导出脚本；
-- 新增 ONNX 单张图像推理测试脚本；
-- 为后续眼部区域定位、眨眼识别和人机交互应用提供基础。
-
-目前项目仅在 **WFLW 数据集** 上进行了训练和测试，其他数据集暂未进行系统验证。
