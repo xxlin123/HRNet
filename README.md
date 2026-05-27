@@ -1,111 +1,91 @@
-# High-resolution networks (HRNets) for facial landmark detection
+# HRNet Facial Landmark Detection for WFLW
 
-## News
-- [2020/03/13] Our paper is accepted by TPAMI: [Deep High-Resolution Representation Learning for Visual Recognition](https://arxiv.org/pdf/1908.07919.pdf).
+本项目基于 HRNet 人脸关键点检测方法进行整理与二次开发，主要用于 **WFLW 数据集上的人脸关键点检测训练、测试与 ONNX 推理部署**。当前版本主要完成了 WFLW 数据集下的模型训练流程、测试流程以及部分 ONNX 导出和单张图像推理脚本整理。
 
-## Introduction 
-This is the official code of [High-Resolution Representations for Facial Landmark Detection](https://arxiv.org/pdf/1904.04514.pdf). 
-We extend the high-resolution representation (HRNet) [1] by augmenting the high-resolution representation by aggregating the (upsampled) 
-representations from all the parallel convolutions, leading to stronger representations. The output representations are fed into
-classifier. We evaluate our methods on four datasets, COFW, AFLW, WFLW and 300W.
+> 说明：本仓库代码参考并改写自 HRNet-Facial-Landmark-Detection 官方实现，当前主要用于学习、实验复现和后续工程化开发。
 
-<div align=center>
+## 1. 项目简介
 
-![](images/hrnet.jpg)
+人脸关键点检测是人脸分析任务中的基础环节，可用于人脸对齐、表情分析、眼部区域定位、眨眼识别、人机交互等应用场景。本项目采用 HRNet 作为主干网络，通过保持高分辨率特征表示，实现对人脸关键点位置的精细预测。
 
-</div>
+当前项目重点关注：
 
-## Performance
-### ImageNet pretrained models
-HRNetV2 ImageNet pretrained models are now available! Codes and pretrained models are in [HRNets for Image Classification](https://github.com/HRNet/HRNet-Image-Classification)
+- 基于 HRNet 的人脸关键点检测；
+- WFLW 数据集训练与测试；
+- 模型权重加载与结果评估；
+- ONNX 模型导出；
+- 单张图像 ONNX 推理测试；
 
+## 2. 当前支持情况
 
-We adopt **HRNetV2-W18**(#Params=9.3M, GFLOPs=4.3G) for facial landmark detection on COFW, AFLW, WFLW and 300W.
+目前本项目仅在 **WFLW 数据集** 上进行了训练和测试。
 
-### COFW
+| 数据集 | 关键点数量 | 当前支持状态 |
+|---|---:|---|
+| WFLW | 98 | 已支持训练与测试 |
+| 300W | 68 | 暂未验证 |
+| AFLW | 19 | 暂未验证 |
+| COFW | 29 | 暂未验证 |
 
-The model is trained on COFW *train* and evaluated on COFW *test*.
+后续如果补充其他数据集的训练结果，会继续更新说明。
 
-| Model | NME | FR<sub>0.1</sub>|pretrained model|model|
-|:--:|:--:|:--:|:--:|:--:|
-|HRNetV2-W18  | 3.45 | 0.20 | [HRNetV2-W18](https://1drv.ms/u/s!Aus8VCZ_C_33cMkPimlmClRvmpw) | [HR18-COFW.pth](https://1drv.ms/u/s!AiWjZ1LamlxzdFIsEUQl8jgUaMk)|
+## 3. 项目结构
 
-
-### AFLW
-The model is trained on AFLW *train* and evaluated on AFLW *full* and *frontal*.
-
-| Model | NME<sub>*full*</sub> | NME<sub>*frontal*</sub> | pretrained model|model|
-|:--:|:--:|:--:|:--:|:--:|
-|HRNetV2-W18 | 1.57 | 1.46 | [HRNetV2-W18](https://1drv.ms/u/s!Aus8VCZ_C_33cMkPimlmClRvmpw) | [HR18-AFLW.pth](https://1drv.ms/u/s!AiWjZ1Lamlxzc7xumEw810iBLTc)|
-
-### WFLW
-
-| NME |  *test* | *pose* | *illumination* | *occlution* | *blur* | *makeup* | *expression* | pretrained model|model|
-|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-|HRNetV2-W18 | 4.60 | 7.86 | 4.57 | 5.42 | 5.36 | 4.26 | 4.78 | [HRNetV2-W18](https://1drv.ms/u/s!Aus8VCZ_C_33cMkPimlmClRvmpw) | [HR18-WFLW.pth](https://1drv.ms/u/s!AiWjZ1LamlxzdTsr_9QZCwJsn5U)|
-
-
-### 300W
-
-| NME | *common*| *challenge* | *full* | *test*|  pretrained model|model|
-|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-|HRNetV2-W18 | 2.91 | 5.11 | 3.34 | 3.85 | [HRNetV2-W18](https://1drv.ms/u/s!Aus8VCZ_C_33cMkPimlmClRvmpw) | [HR18-300W.pth](https://1drv.ms/u/s!AiWjZ1LamlxzeYLmza1XU-4WhnQ)|
-
-
-![](images/face.png)
-
-## Quick start
-#### Environment
-This code is developed using on Python 3.6 and PyTorch 1.0.0 on Ubuntu 16.04 with NVIDIA GPUs. Training and testing are 
-performed using 1 NVIDIA P40 GPU with CUDA 9.0 and cuDNN 7.0. Other platforms or GPUs are not fully tested.
-
-#### Install
-1. Install PyTorch 1.0 following the [official instructions](https://pytorch.org/)
-2. Install dependencies
-````bash
-
-pip install -r requirements.txt
-````
-3. Clone the project
-````bash 
-git clone https://github.com/HRNet/HRNet-Facial-Landmark-Detection.git
-````
-
-#### HRNetV2 pretrained models
 ```bash
-cd HRNet-Facial-Landmark-Detection
-# Download pretrained models into this folder
-mkdir hrnetv2_pretrained
+HRNet/
+├── experiments/                  # 配置文件
+│   └── wflw/
+│       └── face_alignment_wflw_hrnet_w18.yaml
+├── lib/
+│   ├── config/                   # 配置加载
+│   ├── core/                     # 训练、测试和评估逻辑
+│   ├── datasets/                 # 数据集读取
+│   ├── models/                   # HRNet 网络结构
+│   └── utils/                    # 工具函数
+├── tools/
+│   ├── train.py                  # 训练脚本
+│   ├── test.py                   # 测试脚本
+│   ├── export_hrnet_heatmap_coords_onnx.py   # ONNX 导出脚本
+│   └── test_hrnet_onnx_image.py              # ONNX 单图推理脚本
+├── data/                         # 数据集目录，需自行准备
+├── output/                       # 训练输出目录
+├── log/                          # 日志目录
+└── README.md
 ```
-#### Data
 
-1. You need to download the annotations files which have been processed from [OneDrive](https://1drv.ms/u/s!AiWjZ1LamlxzdmYbSkHpPYhI8Ms), [Cloudstor](https://cloudstor.aarnet.edu.au/plus/s/m9lHU2aJId8Sh8l), and [BaiduYun(Acess Code:ypxg)](https://pan.baidu.com/s/1Yg1IEp3l2IpGPolpUsWdfg).
+## 4. 环境配置
 
-2. You need to download images (300W, AFLW, WFLW) from official websites and then put them into `images` folder for each dataset.
+建议使用 Conda 创建独立环境：
 
-Your `data` directory should look like this:
+```bash
+conda create -n hrnet-face python=3.8 -y
+conda activate hrnet-face
+```
+
+安装项目运行所需依赖：
+
+```bash
+pip install torch torchvision
+pip install opencv-python numpy scipy yacs tqdm matplotlib
+pip install onnx onnxruntime
+```
+---
+
+## 5. 数据集准备
+
+当前项目仅在 **WFLW 数据集** 上进行了训练和测试。请自行下载 WFLW 数据集，并按照配置文件中的路径进行组织。注释文件和预训练权重可以在这里下载(
+链接: https://pan.baidu.com/s/1OmxKxjGB1XJnwtltLHx7Lg 提取码: enq5)
+
+推荐目录结构如下：
 
 ````
 HRNet-Facial-Landmark-Detection
 -- lib
 -- experiments
+-- hrnetv2_pretrained
+   |--hrnetv2_w18_imagenet_pretrained.pth
 -- tools
 -- data
-   |-- 300w
-   |   |-- face_landmarks_300w_test.csv
-   |   |-- face_landmarks_300w_train.csv
-   |   |-- face_landmarks_300w_valid.csv
-   |   |-- face_landmarks_300w_valid_challenge.csv
-   |   |-- face_landmarks_300w_valid_common.csv
-   |   |-- images
-   |-- aflw
-   |   |-- face_landmarks_aflw_test.csv
-   |   |-- face_landmarks_aflw_test_frontal.csv
-   |   |-- face_landmarks_aflw_train.csv
-   |   |-- images
-   |-- cofw
-   |   |-- COFW_test_color.mat
-   |   |-- COFW_train_color.mat  
    |-- wflw
    |   |-- face_landmarks_wflw_test.csv
    |   |-- face_landmarks_wflw_test_blur.csv
@@ -119,57 +99,123 @@ HRNet-Facial-Landmark-Detection
 
 ````
 
-#### Train
-Please specify the configuration file in `experiments` (learning rate should be adjusted when the number of GPUs is changed).
-````bash
-python tools/train.py --cfg <CONFIG-FILE>
-# example:
+对应配置文件路径为：
+
+```text
+experiments/wflw/face_alignment_wflw_hrnet_w18.yaml
+```
+
+需要重点检查以下字段，并根据实际数据路径进行修改：
+
+```yaml
+DATASET:
+  ROOT: './data/wflw/images/'
+  TRAINSET: './data/wflw/face_landmarks_wflw_train.csv'
+  TESTSET: './data/wflw/face_landmarks_wflw_test.csv'
+```
+
+---
+
+## 6. 模型训练
+
+使用以下命令在 WFLW 数据集上训练 HRNet-W18 模型：
+
+```bash
 python tools/train.py --cfg experiments/wflw/face_alignment_wflw_hrnet_w18.yaml
-````
+```
 
-#### Test
-````bash
-python tools/test.py --cfg <CONFIG-FILE> --model-file <MODEL WEIGHT> 
-# example:
-python tools/test.py --cfg experiments/wflw/face_alignment_wflw_hrnet_w18.yaml --model-file HR18-WFLW.pth
-````
+训练完成后，模型权重默认保存在：
 
- 
-## Other applications of HRNets (codes and models):
-* [Human pose estimation](https://github.com/leoxiaobin/deep-high-resolution-net.pytorch)
-* [Semantic segmentation](https://github.com/HRNet/HRNet-Semantic-Segmentation)
-* [Object detection](https://github.com/HRNet/HRNet-Object-Detection)
-* [Image classification](https://github.com/HRNet/HRNet-Image-Classification)
- 
-## Citation
-If you find this work or code is helpful in your research, please cite:
-````
-@inproceedings{SunXLW19,
-  title={Deep High-Resolution Representation Learning for Human Pose Estimation},
-  author={Ke Sun and Bin Xiao and Dong Liu and Jingdong Wang},
-  booktitle={CVPR},
-  year={2019}
-}
+```text
+output/WFLW/face_alignment_wflw_hrnet_w18/
+```
 
-@article{WangSCJDZLMTWLX19,
-  title={Deep High-Resolution Representation Learning for Visual Recognition},
-  author={Jingdong Wang and Ke Sun and Tianheng Cheng and 
-          Borui Jiang and Chaorui Deng and Yang Zhao and Dong Liu and Yadong Mu and 
-          Mingkui Tan and Xinggang Wang and Wenyu Liu and Bin Xiao},
-  journal   = {TPAMI}
-  year={2019}
-}
-````
+---
 
-## Reference
-[1] Deep High-Resolution Representation Learning for Visual Recognition. Jingdong Wang, Ke Sun, Tianheng Cheng, 
-    Borui Jiang, Chaorui Deng, Yang Zhao, Dong Liu, Yadong Mu, Mingkui Tan, Xinggang Wang, Wenyu Liu, Bin Xiao. Accepted by TPAMI.  [download](https://arxiv.org/pdf/1908.07919.pdf)
+## 7. 模型测试
 
-现在用的这个Onnx是在/root/data/xxl/cailei/HRNet-Facial-Landmark-Detection/hrnetv2_pretrained/hrnetv2_w18_imagenet_pretrained.pth这个预训练权重的基础上在wflw数据集上训练得到的
-训练命令是python tools/train.py --cfg experiments/wflw/face_alignment_wflw_hrnet_w18.yaml
-导出onnx的代码是tools/export_hrnet_landmark_onnx.py
+使用训练好的模型进行测试：
 
-python tools/export_hrnet_heatmap_coords_onnx.py --cfg experiments/wflw/face_alignment_wflw_hrnet_w18.yaml --model-file /root/data/xxl/cailei/HRNet-Facial-Landmark-Detection/output/WFLW/face_alignment_wflw_hrnet_w18/model_best.pth --onnx-file output/WFLW/face_alignment_wflw_hrnet_w18/hrnet_wflw_98_heatmap_coords_scores.onnx  --opset 11
+```bash
+python tools/test.py \
+  --cfg experiments/wflw/face_alignment_wflw_hrnet_w18.yaml \
+  --model-file output/WFLW/face_alignment_wflw_hrnet_w18/model_best.pth
+```
 
-#测试onnx
-python tools/test_hrnet_onnx_image.py --onnx output/WFLW/face_alignment_wflw_hrnet_w18/hrnet_wflw_98_heatmap_coords_scores.onnx --image /root/data/xxl/cailei/HRNet-Facial-Landmark-Detection/data/wflw/images_test/wflw_test_0005.jpg --output result_005.jpg --input_w 256 --input_h 256  --norm imagenet --draw_index
+如果模型权重路径不同，请根据实际保存位置修改 `--model-file` 参数。
+
+---
+
+## 8. ONNX 模型导出
+
+本项目整理了 HRNet 关键点检测模型的 ONNX 导出脚本，可使用以下命令导出模型：
+
+```bash
+python tools/export_hrnet_heatmap_coords_onnx.py \
+  --cfg experiments/wflw/face_alignment_wflw_hrnet_w18.yaml \
+  --model-file output/WFLW/face_alignment_wflw_hrnet_w18/model_best.pth \
+  --output hrnet_wflw.onnx
+```
+
+导出的 ONNX 模型可用于后续部署、推理测试或工程化集成。
+
+---
+
+## 9. ONNX 单张图像推理
+
+使用 ONNX Runtime 对单张图像进行推理测试：
+
+```bash
+python tools/test_hrnet_onnx_image.py \
+  --onnx hrnet_wflw.onnx \
+  --image path/to/test.jpg
+```
+
+该脚本主要用于验证 ONNX 模型是否能够正常加载，并输出人脸关键点预测结果。
+
+---
+
+## 10. 预训练模型说明
+
+如果使用 ImageNet 预训练的 HRNet 权重，请将其放置到对应目录，例如：
+
+```text
+hrnetv2_pretrained/
+└── hrnetv2_w18_imagenet_pretrained.pth
+```
+
+由于预训练权重文件通常较大，建议不要直接上传到 GitHub 仓库中。可以通过网盘、GitHub Release 或 Git LFS 等方式管理模型权重。
+
+---
+
+## 11. 当前版本说明
+
+当前版本主要完成以下内容：
+
+- 整理 WFLW 数据集训练配置；
+- 完成 HRNet-W18 在 WFLW 数据集上的训练与测试流程；
+- 新增 ONNX 导出脚本；
+- 新增 ONNX 单张图像推理测试脚本；
+- 为后续眼部区域定位、眨眼识别和人机交互应用提供基础。
+
+目前项目仅在 **WFLW 数据集** 上进行了训练和测试，其他数据集暂未进行系统验证。
+
+---
+
+## 12. 后续计划
+
+- [ ] 补充 WFLW 数据集上的训练结果和测试指标；
+- [ ] 增加关键点检测结果可视化示例；
+- [ ] 整理模型权重下载方式；
+- [ ] 支持摄像头实时人脸关键点检测；
+- [ ] 与眼部区域检测、眨眼分类模块进行集成；
+- [ ] 补充技术报告和数据集构建说明；
+- [ ] 进一步优化模型推理速度和工程部署流程。
+
+---
+
+## 13. 致谢
+
+本项目参考了 HRNet-Facial-Landmark-Detection 的代码实现，在此对原作者的工作表示感谢。HRNet 在保持高分辨率特征表达方面具有较好的关键点定位能力，为本项目在 WFLW 数据集上的训练、测试和后续应用开发提供了重要基础。
+
+同时，本项目当前主要面向 WFLW 数据集下的人脸关键点检测实验与工程化整理，后续将结合实际应用需求继续完善。
