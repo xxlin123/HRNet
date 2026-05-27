@@ -165,3 +165,11 @@ If you find this work or code is helpful in your research, please cite:
 [1] Deep High-Resolution Representation Learning for Visual Recognition. Jingdong Wang, Ke Sun, Tianheng Cheng, 
     Borui Jiang, Chaorui Deng, Yang Zhao, Dong Liu, Yadong Mu, Mingkui Tan, Xinggang Wang, Wenyu Liu, Bin Xiao. Accepted by TPAMI.  [download](https://arxiv.org/pdf/1908.07919.pdf)
 
+现在用的这个Onnx是在/root/data/xxl/cailei/HRNet-Facial-Landmark-Detection/hrnetv2_pretrained/hrnetv2_w18_imagenet_pretrained.pth这个预训练权重的基础上在wflw数据集上训练得到的
+训练命令是python tools/train.py --cfg experiments/wflw/face_alignment_wflw_hrnet_w18.yaml
+导出onnx的代码是tools/export_hrnet_landmark_onnx.py
+
+python tools/export_hrnet_heatmap_coords_onnx.py --cfg experiments/wflw/face_alignment_wflw_hrnet_w18.yaml --model-file /root/data/xxl/cailei/HRNet-Facial-Landmark-Detection/output/WFLW/face_alignment_wflw_hrnet_w18/model_best.pth --onnx-file output/WFLW/face_alignment_wflw_hrnet_w18/hrnet_wflw_98_heatmap_coords_scores.onnx  --opset 11
+
+#测试onnx
+python tools/test_hrnet_onnx_image.py --onnx output/WFLW/face_alignment_wflw_hrnet_w18/hrnet_wflw_98_heatmap_coords_scores.onnx --image /root/data/xxl/cailei/HRNet-Facial-Landmark-Detection/data/wflw/images_test/wflw_test_0005.jpg --output result_005.jpg --input_w 256 --input_h 256  --norm imagenet --draw_index

@@ -57,13 +57,58 @@ def main():
     model = nn.DataParallel(model, device_ids=gpus).cuda()
 
     # load model
-    state_dict = torch.load(args.model_file)
-    if 'state_dict' in state_dict.keys():
-        state_dict = state_dict['state_dict']
-        model.load_state_dict(state_dict)
-    else:
-        model.module.load_state_dict(state_dict)
+    # state_dict = torch.load(args.model_file)
+    # if 'state_dict' in state_dict.keys():
+    #     state_dict = state_dict['state_dict']
+    #     model.load_state_dict(state_dict)
+    # else:
+    #     model.module.load_state_dict(state_dict)
+    # load model
+    # load model
+    checkpoint = torch.load(args.model_file, map_location='cpu')
 
+    # 情况1：checkpoint 是 dict
+    if isinstance(checkpoint, dict):
+        logger.info('Loaded checkpoint dict from {}'.format(args.model_file))
+
+        if 'state_dict' in checkpoint:
+            checkpoint = checkpoint['state_dict']
+        elif 'model' in checkpoint:
+            checkpoint = checkpoint['model']
+
+    # 情况2：checkpoint 或 checkpoint['state_dict'] 是完整模型
+    if isinstance(checkpoint, nn.DataParallel):
+        logger.info('Checkpoint contains a DataParallel model object')
+
+        loaded_model = checkpoint.module
+        model.module.load_state_dict(loaded_model.state_dict())
+
+    elif isinstance(checkpoint, nn.Module):
+        logger.info('Checkpoint contains a full model object')
+
+        model.module.load_state_dict(checkpoint.state_dict())
+
+    # 情况3：checkpoint 是真正的 state_dict
+    elif isinstance(checkpoint, dict):
+        logger.info('Checkpoint contains a real state_dict')
+
+        try:
+            model.load_state_dict(checkpoint)
+        except RuntimeError:
+            new_state_dict = {}
+
+            for k, v in checkpoint.items():
+                if k.startswith('module.'):
+                    new_state_dict[k] = v
+                else:
+                    new_state_dict['module.' + k] = v
+
+            model.load_state_dict(new_state_dict)
+
+    else:
+        raise TypeError('Unsupported checkpoint type: {}'.format(type(checkpoint)))
+
+    model.eval()
     dataset_type = get_dataset(config)
 
     test_loader = DataLoader(
@@ -74,7 +119,7 @@ def main():
         num_workers=config.WORKERS,
         pin_memory=config.PIN_MEMORY
     )
-
+    model.eval()
     nme, predictions = function.inference(config, test_loader, model)
 
     torch.save(predictions, os.path.join(final_output_dir, 'predictions.pth'))

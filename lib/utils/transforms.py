@@ -9,6 +9,7 @@ import torch
 import scipy
 import scipy.misc
 import numpy as np
+from PIL import Image
 
 
 MATCHED_PARTS = {
@@ -124,6 +125,7 @@ def get_transform(center, scale, output_size, rot=0):
     t[0, 2] = output_size[1] * (-float(center[0]) / h + .5)
     t[1, 2] = output_size[0] * (-float(center[1]) / h + .5)
     t[2, 2] = 1
+
     if not rot == 0:
         rot = -rot  # To match direction of rotation from cropping
         rot_mat = np.zeros((3, 3))
@@ -132,13 +134,16 @@ def get_transform(center, scale, output_size, rot=0):
         rot_mat[0, :2] = [cs, -sn]
         rot_mat[1, :2] = [sn, cs]
         rot_mat[2, 2] = 1
+
         # Need to rotate around center
         t_mat = np.eye(3)
-        t_mat[0, 2] = -output_size[1]/2
-        t_mat[1, 2] = -output_size[0]/2
+        t_mat[0, 2] = -output_size[1] / 2
+        t_mat[1, 2] = -output_size[0] / 2
         t_inv = t_mat.copy()
         t_inv[:2, 2] *= -1
+
         t = np.dot(t_inv, np.dot(rot_mat, np.dot(t_mat, t)))
+
     return t
 
 
@@ -165,23 +170,30 @@ def crop(img, center, scale, output_size, rot=0):
     # Preprocessing for efficient cropping
     ht, wd = img.shape[0], img.shape[1]
     sf = scale * 200.0 / output_size[0]
+
     if sf < 2:
         sf = 1
     else:
         new_size = int(np.math.floor(max(ht, wd) / sf))
         new_ht = int(np.math.floor(ht / sf))
         new_wd = int(np.math.floor(wd / sf))
+
         if new_size < 2:
             return torch.zeros(output_size[0], output_size[1], img.shape[2]) \
-                        if len(img.shape) > 2 else torch.zeros(output_size[0], output_size[1])
+                if len(img.shape) > 2 else torch.zeros(output_size[0], output_size[1])
         else:
-            img = scipy.misc.imresize(img, [new_ht, new_wd])  # (0-1)-->(0-255)
+            img = cv2.resize(
+                img,
+                (int(new_wd), int(new_ht)),
+                interpolation=cv2.INTER_LINEAR
+            )
             center_new[0] = center_new[0] * 1.0 / sf
             center_new[1] = center_new[1] * 1.0 / sf
             scale = scale / sf
 
     # Upper left point
     ul = np.array(transform_pixel([0, 0], center_new, scale, output_size, invert=1))
+
     # Bottom right point
     br = np.array(transform_pixel(output_size, center_new, scale, output_size, invert=1))
 
@@ -200,16 +212,39 @@ def crop(img, center, scale, output_size, rot=0):
     # Range to fill new array
     new_x = max(0, -ul[0]), min(br[0], len(img[0])) - ul[0]
     new_y = max(0, -ul[1]), min(br[1], len(img)) - ul[1]
+
     # Range to sample from original image
     old_x = max(0, ul[0]), min(len(img[0]), br[0])
     old_y = max(0, ul[1]), min(len(img), br[1])
-    new_img[new_y[0]:new_y[1], new_x[0]:new_x[1]] = img[old_y[0]:old_y[1], old_x[0]:old_x[1]]
 
+    new_img[new_y[0]:new_y[1], new_x[0]:new_x[1]] = \
+        img[old_y[0]:old_y[1], old_x[0]:old_x[1]]
+
+    # Rotate by OpenCV, not PIL
     if not rot == 0:
+        h, w = new_img.shape[:2]
+        rot_center = (w / 2.0, h / 2.0)
+        rot_mat = cv2.getRotationMatrix2D(rot_center, rot, 1.0)
+        new_img = cv2.warpAffine(
+            new_img,
+            rot_mat,
+            (w, h),
+            flags=cv2.INTER_LINEAR,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=0
+        )
+
         # Remove padding
-        new_img = scipy.misc.imrotate(new_img, rot)
-        new_img = new_img[pad:-pad, pad:-pad]
-    new_img = scipy.misc.imresize(new_img, output_size)
+        if pad > 0:
+            new_img = new_img[pad:-pad, pad:-pad]
+
+    # Resize by OpenCV
+    new_img = cv2.resize(
+        new_img,
+        (int(output_size[1]), int(output_size[0])),
+        interpolation=cv2.INTER_LINEAR
+    )
+
     return new_img
 
 
